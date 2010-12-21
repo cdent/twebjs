@@ -63,7 +63,6 @@ var TiddlyWiki = function(container)
                     response.setEncoding('utf8');
                     response.on('data', function(chunk) {
                         data += chunk;
-                        console.log(data);
                     });
                     response.on('end', function() {
                         tiddlerJSON = data ? JSON.parse(data) : {};
@@ -127,7 +126,6 @@ var TiddlyWiki = function(container)
                     response.setEncoding('utf8');
                     response.on('data', function(chunk) {
                         data += chunk;
-                        console.log(data);
                     });
                     response.on('end', function() {
                         tiddlers = data ? JSON.parse(data) : [];
@@ -139,47 +137,47 @@ var TiddlyWiki = function(container)
             });
             return emitter;
         };
-	this.fetchTiddler = function(title) {
+	this.fetchTiddler = function(title, success, error) {
             var getEmitter = this._getTiddler(title);
             getEmitter.on('end', function(json) {
-                console.log(json);
+                success(json);
             });
             getEmitter.on('error', function(err) {
-                console.log(err);
-                throw err;
+                error(null, err);
             });
 	};
-	this.deleteTiddler = function(title) {
+	this.deleteTiddler = function(title, success, error) {
             delete this.slices[title];
             var deleteEmitter = this._deleteTiddler(title);
             deleteEmitter.on('end', function() {
-                console.log('deleted');
+                success();
             });
-            putEmitter.on('error', function(err) {
-                throw err;
+            deleteEmitter.on('error', function(err) {
+                error(err);
             });
 	};
-	this.addTiddler = function(tiddler) {
+	this.addTiddler = function(tiddler, success, error) {
             delete this.slices[tiddler.title];
             var putEmitter = this._putTiddler(tiddler);
             putEmitter.on('end', function() {
-                console.log('put');
+                success();
             });
             putEmitter.on('error', function(err) {
-                throw err;
+                error(err);
             });
 	};
-	this.forEachTiddler = function(callback) {
-            var listEmitter = this_listTiddlers();
+	this.forEachTiddler = function(callback, success, error) {
+            var listEmitter = this._listTiddlers();
             listEmitter.on('end', function(tiddlers) {
                 var tiddlerCount = tiddlers.length;
                 for (var i = 0; i < tiddlerCount; i++) {
                     var tiddler = tiddlers[i];
                     callback.call(this, tiddler.title, tiddler);
 		}
+                success();
             });
             listEmitter.on('error', function(response) {
-                console.log(response.statusCode);
+                error(response);
             });
 	};
 }
